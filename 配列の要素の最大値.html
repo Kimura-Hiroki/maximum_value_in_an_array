@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>配列の要素の最大値</title>
+  <style>
+    :root{--bg:#fafafc;--panel:#fff;--text:#111827;--muted:#6b7280;--line:#e5e7eb;--accent:#2563eb;--ok:#16a34a;--shadow:0 8px 22px rgba(0,0,0,.06);--radius:16px}
+    html,body{background:var(--bg);color:var(--text);margin:0;font-family:system-ui,-apple-system,"Segoe UI",Roboto,"Noto Sans JP","Yu Gothic",sans-serif}
+    .wrap{max-width:980px;margin:28px auto;padding:0 16px}
+
+    .hero{margin-bottom:10px}
+    h1{margin:0;font-size:clamp(22px,3.0vw,32px);font-weight:800;letter-spacing:.01em}
+    .title-note{color:var(--muted);font-size:14px;margin-top:6px}
+    .title-underline{height:3px;width:140px;background:rgba(37,99,235,.35);border-radius:999px;margin-top:10px}
+
+    .panel{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:16px;margin-top:16px}
+    .panel h2{font-size:16px;margin:0 0 10px}
+
+    .array{display:grid;grid-template-columns:repeat(auto-fit,minmax(76px,1fr));gap:12px;margin-bottom:16px}
+    .cell{display:flex;align-items:center;justify-content:center;background:#fff;border:2px solid var(--line);border-radius:14px;padding:18px 8px;font-size:22px;font-weight:800;transition:.25s}
+    .cell.current{border-color:var(--accent);box-shadow:0 0 0 4px rgba(37,99,235,.12)}
+    .cell.max{border-color:var(--ok);box-shadow:0 0 0 4px rgba(22,163,74,.12)}
+
+    .badge{border:2px solid var(--ok);border-radius:14px;padding:14px 16px;background:#fff;box-shadow:var(--shadow);text-align:center;margin-top:10px}
+    .badge small{display:block;color:var(--muted);font-weight:700;margin-bottom:6px}
+    .saidai-number{font-weight:900;color:var(--ok);font-size:28px;line-height:1.3}
+
+    .controls{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px;align-items:center}
+    .btn{appearance:none;border:1px solid var(--line);background:#fff;padding:10px 14px;border-radius:12px;font-weight:800;cursor:pointer}
+    .btn.primary{background:var(--accent);color:#fff;border-color:var(--accent)}
+    .btn:disabled{opacity:.5;cursor:not-allowed}
+    .speed{display:flex;align-items:center;gap:8px;color:var(--muted);font-size:13px}
+    .speed .hint{font-size:12px}
+    input[type=range]{accent-color:var(--accent)}
+
+    .guide{margin-top:12px;padding:12px;border:1px solid var(--line);border-radius:12px;background:#fff;min-height:3em}
+
+    pre{margin:0;background:#fff;border:1px solid var(--line);border-radius:12px;padding:14px;font-family:ui-monospace,Menlo,monospace;font-size:14px;line-height:1.6;overflow:auto}
+    .code-line{display:block;border-left:4px solid transparent;padding-left:8px}
+    .code-line.active{background:#eef2ff;border-left-color:var(--accent)}
+
+    /* 簡易シンタックスハイライト */
+    .kw{color:#d73a49;font-weight:bold}
+    .var{color:#005cc5}
+    .num{color:#0366d6}
+    .str{color:#032f62}
+
+    footer{margin:18px 0;color:var(--muted);font-size:12px;text-align:center}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="hero">
+      <h1>配列の要素の最大値</h1>
+      <div class="title-underline" aria-hidden="true"></div>
+      <p class="title-note">数字を一つずつ見て、これまでの saidai と比べます。大きければ saidai をその値にします。</p>
+    </div>
+
+    <section class="panel" aria-labelledby="vizTitle">
+      <h2 id="vizTitle">数字を順に比べていく</h2>
+      <div id="array" class="array" aria-live="polite"></div>
+      <div class="badge" aria-live="polite">
+        <small>現在の saidai の値</small>
+        <div id="saidaiVal" class="saidai-number">-</div>
+      </div>
+
+      <div class="controls">
+        <button id="back" class="btn">戻る ⏮</button>
+        <button id="step" class="btn primary">次へ ⏭</button>
+        <button id="play" class="btn">自動 ▶︎</button>
+        <button id="reset" class="btn">リセット</button>
+        <div class="speed">
+          <span class="hint">遅い</span>
+          <input id="speed" type="range" min="0" max="100" value="60" />
+          <span class="hint">速い</span>
+        </div>
+      </div>
+
+      <div id="guide" class="guide"></div>
+    </section>
+
+    <section class="panel" aria-labelledby="codeTitle">
+      <h2 id="codeTitle">Pythonプログラム</h2>
+      <pre id="code">
+<span class="code-line" data-line="1"><span class="var">Data</span> = [<span class="num">11</span>, <span class="num">35</span>, <span class="num">32</span>, <span class="num">67</span>, <span class="num">74</span>, <span class="num">56</span>, <span class="num">83</span>, <span class="num">22</span>]</span>
+<span class="code-line" data-line="2"><span class="var">saidai</span> = <span class="var">Data</span>[<span class="num">0</span>]</span>
+<span class="code-line" data-line="3"><span class="kw">for</span> <span class="var">i</span> <span class="kw">in</span> <span class="var">range</span>(<span class="num">1</span>, <span class="var">len</span>(<span class="var">Data</span>)):</span>
+<span class="code-line" data-line="4">    <span class="kw">if</span> <span class="var">saidai</span> &lt; <span class="var">Data</span>[<span class="var">i</span>]:</span>
+<span class="code-line" data-line="5">        <span class="var">saidai</span> = <span class="var">Data</span>[<span class="var">i</span>]</span>
+<span class="code-line" data-line="6"><span class="var">print</span>(<span class="str">"最大値"</span>, <span class="var">saidai</span>)</span>
+      </pre>
+    </section>
+  </div>
+
+  <script>
+    const state = { data:[11,35,32,67,74,56,83,22], i:1, saidai:null, phase:0, playing:false, speed:500, history:[] };
+
+    const arrayEl=document.getElementById('array');
+    const saidaiVal=document.getElementById('saidaiVal');
+    const stepBtn=document.getElementById('step');
+    const backBtn=document.getElementById('back');
+    const playBtn=document.getElementById('play');
+    const resetBtn=document.getElementById('reset');
+    const speedEl=document.getElementById('speed');
+    const codeEl=document.getElementById('code');
+    const guide=document.getElementById('guide');
+
+    const hl=(n)=>{[...codeEl.querySelectorAll('.code-line')].forEach(l=>l.classList.remove('active'));const t=codeEl.querySelector(`[data-line="${n}"]`);if(t)t.classList.add('active');};
+
+    function renderArray(){
+      arrayEl.innerHTML='';
+      state.data.forEach((v,idx)=>{
+        const d=document.createElement('div');
+        d.className='cell'; d.textContent=v;
+        if(v===state.saidai) d.classList.add('max');
+        if(idx===state.i) d.classList.add('current');
+        arrayEl.appendChild(d);
+      });
+      saidaiVal.textContent = state.saidai;
+    }
+
+    function updateSpeed(){
+      const v = Number(speedEl.value);
+      const maxMs = 1000, minMs = 150;
+      const ms = maxMs - (v/100)*(maxMs - minMs);
+      state.speed = Math.round(ms);
+    }
+
+    function init(){
+      state.i=1; state.saidai=state.data[0]; state.phase=0; state.playing=false; state.history=[]; playBtn.textContent='自動 ▶︎';
+      updateSpeed();
+      guide.textContent = `最初の値 ${state.saidai} を saidai として設定します。`;
+      hl(2); renderArray();
+    }
+
+    function step(){
+      if(state.i >= state.data.length){ finish(); return; }
+      const snapshot = {i:state.i, saidai:state.saidai, phase:state.phase};
+      state.history.push(snapshot);
+      const cur = state.data[state.i];
+      if(state.phase === 0){
+        hl(3);
+        guide.textContent = `i=${state.i} の値 ${cur} を見ます。 saidai=${state.saidai} と比べます。`;
+        state.phase = 1;
+      } else if(state.phase === 1){
+        hl(4);
+        const cond = state.saidai < cur;
+        guide.textContent = `比較: ${state.saidai} < ${cur} → ${cond ? '真(True)' : '偽(False)'}`;
+        state.phase = 2;
+      } else {
+        const cond = state.saidai < cur;
+        if(cond){ hl(5); state.saidai = cur; guide.textContent = `saidai を ${cur} に更新します。`; }
+        else{ guide.textContent = `更新しません。saidai は ${state.saidai} のままです。`; }
+        state.i++; state.phase = 0; renderArray();
+      }
+      renderArray();
+      if(state.playing) setTimeout(step, state.speed);
+    }
+
+    function back(){
+      if(state.history.length===0) return;
+      const prev=state.history.pop();
+      state.i=prev.i; state.saidai=prev.saidai; state.phase=prev.phase;
+      renderArray();
+      guide.textContent = `戻りました: i=${state.i}, saidai=${state.saidai}`;
+    }
+
+    function finish(){
+      hl(6);
+      guide.textContent = `すべて確認しました。最終的な最大値（saidai）は ${state.saidai} です。`;
+      state.playing=false; playBtn.textContent='自動 ▶︎';
+    }
+
+    stepBtn.addEventListener('click', ()=>{ state.playing=false; playBtn.textContent='自動 ▶︎'; step(); });
+    backBtn.addEventListener('click', ()=>{ state.playing=false; playBtn.textContent='自動 ▶︎'; back(); });
+    playBtn.addEventListener('click', ()=>{
+      if(state.playing){ state.playing=false; playBtn.textContent='自動 ▶︎'; }
+      else { state.playing=true; playBtn.textContent='一時停止 ⏸'; step(); }
+    });
+    resetBtn.addEventListener('click', init);
+    speedEl.addEventListener('input', ()=>{ updateSpeed(); });
+
+    window.addEventListener('load', init);
+  </script>
+</body>
+</html>
